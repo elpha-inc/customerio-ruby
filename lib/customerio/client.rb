@@ -29,9 +29,17 @@ module Customerio
       create_or_update(attributes)
     end
 
-    def delete(customer_id)
-      raise ParamError.new("customer_id must be a non-empty string") if is_empty?(customer_id)
-      @client.request_and_verify_response(:delete, customer_path(customer_id))
+    def delete(attributes = {})
+      attributes = Hash[attributes.map { |(k,v)| [ k.to_sym, v ] }]
+      raise MissingIdAttributeError.new("Must provide a customer id") if is_empty?(attributes[:id])
+
+      url =
+        if attributes[:cio_id].present?
+          customer_path("cio_"+attributes[:cio_id])
+        else
+          customer_path(attributes[:id])
+        end
+      @client.request_and_verify_response(:delete, url)
     end
 
     def suppress(customer_id)
@@ -154,11 +162,11 @@ module Customerio
       raise MissingIdAttributeError.new("Must provide a customer id") if is_empty?(attributes[:id])
 
       url =
-      if attributes[:cio_id].present?
-        customer_path("cio_"+attributes[:cio_id])
-      else
-        customer_path(attributes[:id])
-      end
+        if attributes[:cio_id].present?
+          customer_path("cio_"+attributes[:cio_id])
+        else
+          customer_path(attributes[:id])
+        end
       @client.request_and_verify_response(:put, url, attributes)
     end
 
